@@ -60,7 +60,7 @@ static IResult GetCar(ILogger<Program> _logger,int id)
     else
     {
         response.ErrorMessages.Add("Invalid Id");
-        _logger.Log(LogLevel.Information, $"Get One Care. Invalid Id");
+        _logger.Log(LogLevel.Information, $"Get One Car Erorr | Invalid Id");
         return Results.BadRequest(response);
     }
 }
@@ -79,11 +79,13 @@ static async Task<IResult> AddCar(ILogger<Program> _logger,
     if(!validationResult.IsValid)
     {
         response.ErrorMessages.Add(validationResult.Errors.FirstOrDefault().ToString());
+        _logger.Log(LogLevel.Information, $"Add Car Error | {response.ErrorMessages}");
         return Results.BadRequest(response);
     }
     if(CarStore.Cars.FirstOrDefault(x=>x.RegistrationNumber.ToLower() == _carAddDTO.RegistrationNumber.ToLower()) != null)
     {
-        response.ErrorMessages.Add("Car Registration Number already Exists");
+        response.ErrorMessages.Add("Car Registration Number already Exist");
+        _logger.Log(LogLevel.Information, $"Add Car Error | Car Registration Number already exist | {_carAddDTO.RegistrationNumber}");
         return Results.BadRequest(response);
     }
     Car car = _mapper.Map<Car>(_carAddDTO);
@@ -109,17 +111,28 @@ static async Task<IResult> UpdateCar(ILogger<Program> _logger,
     if (!validationResult.IsValid)
     {
         response.ErrorMessages.Add(validationResult.Errors.FirstOrDefault().ToString());
+        _logger.Log(LogLevel.Information, $"Update Car Error | {response.ErrorMessages}");
         return Results.BadRequest(response);
     }
     Car _car = CarStore.Cars.FirstOrDefault(x => x.Id == _carUpdateDTO.Id);
-    _car.RegistrationNumber = _carUpdateDTO.RegistrationNumber;
-    _car.Color = _carUpdateDTO.Color;
-    _car.Behavior = _carUpdateDTO.Behavior;
-    _car.Description = _carUpdateDTO.Description;
-    response.Result = _car;
-    response.IsSuccess = true;
-    response.StatusCode = System.Net.HttpStatusCode.OK;
-    return Results.Ok(response);
+    if(_car != null)
+    {
+        _car.RegistrationNumber = _carUpdateDTO.RegistrationNumber;
+        _car.Color = _carUpdateDTO.Color;
+        _car.Behavior = _carUpdateDTO.Behavior;
+        _car.Description = _carUpdateDTO.Description;
+        response.Result = _car;
+        response.IsSuccess = true;
+        response.StatusCode = System.Net.HttpStatusCode.OK;
+        _logger.Log(LogLevel.Information, $"Update Car | Car ID: {_car.Id}");
+        return Results.Ok(response);
+    }
+    else
+    {
+        response.ErrorMessages.Add("Car do not exist in database");
+        _logger.Log(LogLevel.Information, $"Update Car Error | Car do not exist in database");
+        return Results.BadRequest(response);
+    }
 }
 
 static IResult DeleteCar(ILogger<Program> _logger,int id)
@@ -141,6 +154,7 @@ static IResult DeleteCar(ILogger<Program> _logger,int id)
     else
     {
         response.ErrorMessages.Add("Invalid Id");
+        _logger.Log(LogLevel.Information, "Delete Car Error | Invalid Id");
         return Results.BadRequest(response);
     }
 }
